@@ -1,0 +1,56 @@
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const authenticateToken = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+// Register Route
+router.post("/register", async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+    // Create a new user
+    const newUser = new User({ username, email, password });
+    await newUser.save();
+    res.status(201).json({ message: `Successfully registered ${username}` });
+  } catch (error) {
+    console.error("Registration error:", error.message);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+});
+
+// Login Route
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Check if email exists
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
+
+    // Compare password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch)
+      return res.status(400).json({ error: "Incorrect credentials" });
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+    res.json({ token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Dashboard Route (Protected)
+router.get("/dashboard", authenticateToken, async (req, res) => {
+  res.json({ message: `Welcome to your Dashboard, ${req.user.username}!` });
+});
+
+module.exports = router;
