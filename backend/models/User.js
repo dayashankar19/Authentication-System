@@ -6,27 +6,16 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
     maxlength: 30,
-    match: /^[a-zA-Z0-9]+$/,
   },
   email: {
     type: String,
     required: true,
     unique: true,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   password: {
     type: String,
     required: true,
     minlength: 8,
-    validate: {
-      validator: function (v) {
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/.test(
-          v
-        );
-      },
-      message: (props) =>
-        `Password must be 8-20 characters long and include uppercase, lowercase, digit, and special character.`,
-    },
   },
 });
 // Pre-save hook to hash the password before saving
